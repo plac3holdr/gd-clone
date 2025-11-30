@@ -1,0 +1,102 @@
+// GLOBAL VARS
+let player = {
+  x: 90,
+  y: 329,
+  size: 43,
+  velocityY: 0
+}
+
+let gravity = 0.8;
+let jumpStrength = -10.7;
+
+let spikes = [];
+let spawnTimer = 0;
+let spawnInterval = 100;
+let scrollSpeed = 6
+
+let groundY = 350;
+
+function preload() {
+  gdBg = loadImage('gdBackground.png');
+}
+
+function setup() {
+  createCanvas(500, 500);
+}
+
+function draw() {
+ 
+  // Spawn logic
+  spawnTimer++;
+  
+  // base height
+  if (spawnTimer >= spawnInterval) {
+    spawnTimer = 0;
+    
+     // spike height
+    let h = 30;
+    
+    // start just off the right edge
+    spikes.push({ x: width + 20, w: 30, h: h });
+    
+    // spawn interval will more random
+    spawnInterval = Math.floor(random(70, 110));
+  }
+  
+  image(gdBg, 1, 1)
+  
+  // (somewhere where there's no) Gravityyyy
+  player.velocityY += gravity;
+  player.y += player.velocityY;
+  
+  // Keep player on the ground
+  if (player.y > 329) {
+    player.y = 329;
+    player.velocityY = 0;
+  }
+  
+  // Ground (darker version of bg)
+  
+  push();
+  
+  tint(0, 50, 255, 255);
+  image(gdBg, 0, 350, width, 150, 0, 350, width, 150);
+  
+  pop();
+  
+  // player
+  stroke(2)
+  fill('white')
+  circle(player.x, player.y, player.size)
+  
+  
+  // spikes move left and remove off-screen ones
+  for (let i = spikes.length - 1; i >= 0; i--) {
+    spikes[i].x -= scrollSpeed;
+    
+    if (spikes[i].x < -100) {
+      spikes.splice(i, 1);
+    }
+  }
+    
+  // draws spikes from the spikes array
+  for (let s of spikes) {
+
+    // triangle
+    let baseRightX = s.x;
+    let baseLeftX = s.x - s.w;
+    let tipX = s.x - s.w / 2;
+    let tipY = groundY - s.h;
+
+    stroke('white');
+    fill('black');
+    triangle(baseRightX, groundY, tipX, tipY, baseLeftX, groundY);
+  }
+}
+
+function mousePressed() {
+  // Only jump if on the ground
+  if (player.y >= 329) {
+    player.velocityY = jumpStrength;
+  }
+}
