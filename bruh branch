@@ -7,42 +7,61 @@ let player = {
 }
 
 let gravity = 0.8;
-let jumpStrength = -10.7;
+let jumpStrength = -11.4;
 
 let spikes = [];
 let spawnTimer = 0;
 let spawnInterval = 100;
-let scrollSpeed = 6
+let scrollSpeed = 5
 
 let groundY = 350;
 
+let gameOver = false;
+
+let music;
+
 function preload() {
   gdBg = loadImage('gdBackground.png');
+  
+  music = loadSound('what-is-this-diddy-blud-doing-on-the.mp3');
 }
 
 function setup() {
   createCanvas(500, 500);
+  
+  music.loop();
+  music.setVolume(0.5);
 }
 
 function draw() {
  
+  // Stop player from falling when game is over
+  if (gameOver) {
+    gravity = 0;
+    player.velocityY = 0; // stop the player from moving
+  } else {
+    gravity = 0.8;
+  }
+
+  // don't spawn when gameover
+  if (!gameOver) {
+    spawnTimer ++;
+  }
+
   // Spawn logic
-  spawnTimer++;
-  
-  // base height
-  if (spawnTimer >= spawnInterval) {
+  if (!gameOver && spawnTimer >= spawnInterval) {
     spawnTimer = 0;
-    
-     // spike height
+
+    // spike height
     let h = 30;
-    
+
     // start just off the right edge
     spikes.push({ x: width + 20, w: 30, h: h });
-    
+
     // spawn interval will more random
     spawnInterval = Math.floor(random(70, 110));
   }
-  
+
   image(gdBg, 1, 1)
   
   // (somewhere where there's no) Gravityyyy
@@ -56,7 +75,6 @@ function draw() {
   }
   
   // Ground (darker version of bg)
-  
   push();
   
   tint(0, 50, 255, 255);
@@ -69,16 +87,17 @@ function draw() {
   fill('white')
   circle(player.x, player.y, player.size)
   
-  
-  // spikes move left and remove off-screen ones
-  for (let i = spikes.length - 1; i >= 0; i--) {
-    spikes[i].x -= scrollSpeed;
-    
-    if (spikes[i].x < -100) {
-      spikes.splice(i, 1);
+  // spikes move left and remove off-screen ones (only if game is running)
+  if (!gameOver) {
+    for (let i = spikes.length - 1; i >= 0; i--) {
+      spikes[i].x -= scrollSpeed;
+      
+      if (spikes[i].x < -100) {
+        spikes.splice(i, 1);
+      }
     }
-  }
-    
+  }   
+
   // draws spikes from the spikes array
   for (let s of spikes) {
 
@@ -91,12 +110,43 @@ function draw() {
     stroke('white');
     fill('black');
     triangle(baseRightX, groundY, tipX, tipY, baseLeftX, groundY);
+
+    // player's values and stuff js look at it vv
+    let half = player.size / 2;
+    let playerLeft = player.x - half;
+    let playerRight = player.x + half;
+    let playerBottom = player.y + half;
+
+    // spike bounding box (from the triangle values)
+    let spikeLeft = baseLeftX + 10;
+    let spikeRight = baseRightX - 10;
+    let spikeTop = tipY + 5;
+
+    // if player's hitbox overlaps, gameover
+    if (!gameOver &&
+        playerBottom > spikeTop &&
+        playerRight > spikeLeft &&
+        playerLeft < spikeRight) {
+      gameOver = true;
+      if (music && music.isPlaying()) {
+        music.pause();
+      }
+    }
   }
+
+  // line
+  push();
+  
+  stroke('black');
+  strokeWeight(1.2);
+  line(0, 352, 500, 352);
+  
+  pop();
 }
 
 function mousePressed() {
   // Only jump if on the ground
   if (player.y >= 329) {
     player.velocityY = jumpStrength;
-  }
+ } 
 }
